@@ -16,7 +16,7 @@ from generators import training_generator, validation_generator
 
 class CNN:
     def __init__(self):
-        self.model_dir = '../keras_models/'
+        self.model_dir = './'
         self.golden_model_name = 'model.h5'
         self.model_json = join(self.model_dir, 'model_arch.json')
         self.model_yaml = join(self.model_dir, 'model_arch.yaml')

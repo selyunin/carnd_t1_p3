@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 from generators import training_generator, validation_generator
 from hyperparams import HyperParams
 from keras.optimizers import Adam
+from keras.callbacks import ModelCheckpoint
 
 hyper_params = HyperParams()
 cnn = CNN()
@@ -43,11 +44,19 @@ train_gen = training_generator(df_train, batch_size=TRAINING_BATCH_SIZE)
 valid_gen = validation_generator(df_valid, batch_size=VALIDATION_BATCH_SIZE)
 
 
+filepath="weights-{epoch:02d}-{val_acc:.2f}.hdf5"
+checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+callbacks_list = [checkpoint]
+
+
 history_object = cnn.model.fit_generator(generator=train_gen,
                         steps_per_epoch=STEPS_PER_EPOCH,
                         epochs=7,
                         validation_data=valid_gen,
-                        validation_steps=VALIDATION_STEPS)
+                        validation_steps=VALIDATION_STEPS,
+                        callbacks=callbacks_list, 
+#                         verbose=0
+                        )
  
 #get directory with the training data
 #read the training data 
