@@ -172,6 +172,13 @@ class CNN:
         model_arch_json = self.model.to_json() 
         with open(self.model_json, 'w+') as f:
             f.write(model_arch_json)
+    
+    def save_model(self, fname):
+        self.model.save(fname)
+        print("model saved to: {}".format(fname))
+#         model_arch_json = self.model.to_json() 
+#         with open(self.model_json, 'w+') as f:
+#             f.write(model_arch_json)
             
     def save_yaml_model(self):
         model_arch_yaml = self.model.to_yaml() 

@@ -72,6 +72,9 @@ def train_model(model, args, df):
                             callbacks=callbacks_list, 
                             )
 
+def save_model(model, args):
+    model.save_model(args.output_model)
+
 
 def _main():
     description = "Train CNN to steer the car simulator\n" + \
