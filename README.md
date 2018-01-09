@@ -1,8 +1,8 @@
 # Behaviorial Cloning Project 
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-Overview
----
+## Overview
+
 The repository contains files for the Behavioral Cloning Project.
 
 
@@ -31,8 +31,8 @@ To meet specifications, the project contains the following five files:
 * `video.mp4`  (a video recording of the vehicle driving autonomously around the track for at least one full lap)
 
 
-The Project
----
+## The Project
+
 
 The goals / steps of this project are the following:
 * Use the simulator to collect data of good driving behavior 
