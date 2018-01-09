@@ -7,6 +7,7 @@ import re
 import math
 import pandas as pd
 import numpy as np
+import keras
 from os.path import join
 from cnn_model import CNN
 from sklearn.model_selection import train_test_split
@@ -17,7 +18,10 @@ from keras.callbacks import ModelCheckpoint
 
 hyper_params = HyperParams()
 cnn = CNN()
-cnn.create_model()
+if keras.__version__[0] == '1':
+    cnn.create_model_v1_2()
+else:
+    cnn.create_model()
 cnn.model.compile(loss='mse', optimizer = Adam(lr=hyper_params.LEARNING_RATE))
 training_data_path = "../new_training_data"
 log_filename = "driving_log.csv"
@@ -35,7 +39,7 @@ df_train, df_valid = train_test_split(df, test_size=0.2)
 df_train = df_train.reset_index(drop=True)
 df_valid = df_valid.reset_index(drop=True)
 
-TRAINING_BATCH_SIZE = 64
+TRAINING_BATCH_SIZE = 32
 VALIDATION_BATCH_SIZE = 32
 STEPS_PER_EPOCH = math.ceil(df_train.shape[0]*6 / TRAINING_BATCH_SIZE)
 VALIDATION_STEPS = math.ceil(df_valid.shape[0]*6 / VALIDATION_BATCH_SIZE)
@@ -44,20 +48,31 @@ train_gen = training_generator(df_train, batch_size=TRAINING_BATCH_SIZE)
 valid_gen = validation_generator(df_valid, batch_size=VALIDATION_BATCH_SIZE)
 
 
-filepath="weights-{epoch:02d}-{val_acc:.2f}.hdf5"
+filepath="weights-{epoch:02d}-{val_loss:.2f}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
 callbacks_list = [checkpoint]
 
+if keras.__version__[0] == '2':
+    history_object = cnn.model.fit_generator(generator=train_gen,
+                            steps_per_epoch=STEPS_PER_EPOCH,
+                            epochs=7,
+                            validation_data=valid_gen,
+                            validation_steps=VALIDATION_STEPS,
+                            callbacks=callbacks_list, 
+    #                         verbose=0
+                            )
+else:
+    TRAINING_SAMPLES = df_train.shape[0]*6
+    VALIDATION_SAMPLES = df_valid.shape[0]*6
+    history_object = cnn.model.fit_generator(generator=train_gen,
+                            samples_per_epoch=TRAINING_SAMPLES,
+                            nb_epoch=7,
+                            validation_data=valid_gen,
+                            nb_val_samples=VALIDATION_SAMPLES,
+                            callbacks=callbacks_list, 
+                            )
 
-history_object = cnn.model.fit_generator(generator=train_gen,
-                        steps_per_epoch=STEPS_PER_EPOCH,
-                        epochs=7,
-                        validation_data=valid_gen,
-                        validation_steps=VALIDATION_STEPS,
-                        callbacks=callbacks_list, 
-#                         verbose=0
-                        )
- 
+cnn.model.save('keras1_3_dione.h5')
 #get directory with the training data
 #read the training data 
 #read previously saved model
