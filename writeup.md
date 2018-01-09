@@ -1,8 +1,6 @@
 # **Behavioral Cloning Project** 
 
 
----
-
 The goals / steps of this project are the following:
 * Use the simulator to collect data of good driving behavior
 * Build, a convolution neural network in Keras that predicts steering angles from images
@@ -30,30 +28,92 @@ The goals / steps of this project are the following:
 #### 1. Submission includes all required files and can be used to run the simulator in autonomous mode
 
 My project includes the following files:
-* `model.py` containing the script to create and train the model
-* `drive.py` for driving the car in autonomous mode
-* `model.h5` containing a trained convolution neural network 
-* `writeup.md` the project report summarizing the results
-* `video.mp4` a video clip of the vehicle driving autonomously around the track
+* [`model.py`](./model.py) containing the script to create and train the model
+* [`drive.py`](./drive.py) for driving the car in autonomous mode
+* [`model.h5`](./model.h5) containing a trained convolution neural network 
+* [`writeup.md`](./writeup.md) the project report summarizing the results
+* [`video.mp4`](./video.mp4) a video clip of the vehicle driving autonomously around the track
 
 #### 2. Submission includes functional code
 
-Using the Udacity provided simulator and my drive.py file, the car can be driven autonomously around the track by executing 
+Using the Udacity provided simulator and the `drive.py` vehicle controller, 
+the car can be driven autonomously around the track by executing 
+
 ```sh
 python drive.py model.h5
 ```
 
 #### 3. Submission code is usable and readable
 
-The model.py file contains the code for training and saving the convolution neural network. The file shows the pipeline I used for training and validating the model, and it contains comments to explain how the code works.
+The `model.py` file contains the code for training and saving the
+convolution neural network (CNN) as an `*.h5` file.
+The `cnn_model.py` contains a CNN class, which creates Sequential
+Keras model -- the convolutional neural network with the architecture
+described [here](arch).
 
-### Model Architecture and Training Strategy
+The `model.py` is a command line utility, which uses `argparse` module
+to pass the essential training parameters to the script.
+In order to obtain the final `model.h5` the training script was
+launched as follows:
+
+```sh
+./model.py -out_m model.h5 -f my_training_data/ -l_r 1.3e-4
+```
+
+When launching, one specifies (i) the output model file, (ii) the path to the
+training images, and (iii) the learning rate. 
+Other parameters may include (iv) batch size, and (v) input model 
+(which will be first read and then updated during training, 
+allowing the so-called incremental learning).
+
+
+### <a id='arch'> Model Architecture and Training Strategy </a>
 
 #### 1. An appropriate model architecture has been employed
 
-My model consists of a convolution neural network with 3x3 filter sizes and depths between 32 and 128 (model.py lines 18-24) 
+The `CNN` class (in the `cnn_model.py`) implements a convolutional
+neural network architecture (the method `create_model_v1_2` creates 
+the sequential Keras model). 
+I implemented a variant of a model proposed by NVIDIA from 
+[this](http://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf)
+paper. 
+The network accepts images of a road and outputs the steering angle.
 
-The model includes RELU layers to introduce nonlinearity (code line 20), and the data is normalized in the model using a Keras lambda layer (code line 18). 
+The architecture of the network is shown below:
+
+| Layer (type)                   |  Output Shape        |  Param #   |  Connected to                 |    
+|:------------------------------:|:--------------------:|:----------:|:-----------------------------:|
+| cropping2d_1 (Cropping2D)      |  (None, 65, 320, 3)  |  0         |  cropping2d_input_1[0][0]     |    
+|                                |                      |            |                               |    
+| maxpooling2d_1 (MaxPooling2D)  |  (None, 16, 80, 3)   |  0         |  cropping2d_1[0][0]           |    
+|                                |                      |            |                               |    
+| lambda_1 (Lambda)              |  (None, 16, 80, 3)   |  0         |  maxpooling2d_1[0][0]         |    
+|                                |                      |            |                               |    
+| Conv2D_l1 (Convolution2D)      |  (None, 14, 78, 24)  |  672       |  lambda_1[0][0]               |    
+|                                |                      |            |                               |    
+| Conv2D_l2 (Convolution2D)      |  (None, 12, 76, 36)  |  7812      |  Conv2D_l1[0][0]              |    
+|                                |                      |            |                               |    
+| Conv2D_l3 (Convolution2D)      |  (None, 10, 74, 48)  |  15600     |  Conv2D_l2[0][0]              |    
+|                                |                      |            |                               |    
+| Conv2D_l4 (Convolution2D)      |  (None, 8, 72, 64)   |  27712     |  Conv2D_l3[0][0]              |    
+|                                |                      |            |                               |    
+| Conv2D_l5 (Convolution2D)      |  (None, 6, 70, 64)   |  36928     |  Conv2D_l4[0][0]              |    
+|                                |                      |            |                               |    
+| maxpooling2d_2 (MaxPooling2D)  |  (None, 3, 35, 64)   |  0         |  Conv2D_l5[0][0]              |    
+|                                |                      |            |                               |    
+| flatten_1 (Flatten)            |  (None, 6720)        |  0         |  maxpooling2d_2[0][0]         |    
+|                                |                      |            |                               |    
+| dense_1 (Dense)                |  (None, 100)         |  672100    |  flatten_1[0][0]              |    
+|                                |                      |            |                               |    
+| dense_2 (Dense)                |  (None, 50)          |  5050      |  dense_1[0][0]                |    
+|                                |                      |            |                               |    
+| dense_3 (Dense)                |  (None, 10)          |  510       |  dense_2[0][0]                |    
+|                                |                      |            |                               |    
+| dense_4 (Dense)                |  (None, 1)           |  11        |  dense_3[0][0]                |    
+|                                                       |            |                               |   
+
+
+
 
 #### 2. Attempts to reduce overfitting in the model
 
