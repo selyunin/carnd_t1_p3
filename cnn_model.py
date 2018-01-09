@@ -107,7 +107,7 @@ class CNN:
                          border_mode='valid', 
                          activation='elu',
                          name='Conv2D_l1'))
-        self.model.add(Dropout(p=0.5))
+#         self.model.add(Dropout(p=0.5))
         # model.add(MaxPooling2D(pool_size=(2, 2), strides=None, 
         #                        padding='valid', data_format='channels_last'))
         #input size (14 , 78 , 24) self.
@@ -118,7 +118,7 @@ class CNN:
                          border_mode='valid', 
                          activation='elu',
                          name='Conv2D_l2'))
-        self.model.add(Dropout(p=0.5))
+#         self.model.add(Dropout(p=0.5))
         #input size (12 , 76 , 36)
         self.model.add(Convolution2D(nb_filter=48, nb_row=3, nb_col=3,
                          #filters=48, kernel_size=(3,3), 
@@ -126,7 +126,7 @@ class CNN:
                          border_mode='valid', 
                          activation='elu',
                          name='Conv2D_l3'))
-        self.model.add(Dropout(p=0.5))
+#         self.model.add(Dropout(p=0.5))
         #input size (10 , 74 , 48)
         self.model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3,
                          #filters=64, kernel_rom keras.layers import Conv2Dsize=(3,3), 
@@ -134,7 +134,7 @@ class CNN:
                          border_mode='valid', 
                          activation='elu',
                          name='Conv2D_l4'))
-        self.model.add(Dropout(p=0.5))
+#         self.model.add(Dropout(p=0.5))
         #input size (8, 72 , 64) 
         self.model.add(Convolution2D(nb_filter=64, nb_row=3, nb_col=3,
                          #filters=64, kernel_size=(5,5), 
@@ -142,7 +142,7 @@ class CNN:
                          border_mode='valid', 
                          activation='elu',
                          name='Conv2D_l5'))
-        self.model.add(Dropout(p=0.5))
+#         self.model.add(Dropout(p=0.5))
         
         self.model.add(MaxPooling2D(pool_size=(2, 2), strides=None, 
                                border_mode='valid',))
@@ -150,14 +150,14 @@ class CNN:
         #input size (2, 34 , 64) 
         self.model.add(Flatten())
 
-        self.model.add(Dense(100, activation='elu'))
-        self.model.add(Dropout(p=0.5))
+        self.model.add(Dense(100, activation='relu'))
+#         self.model.add(Dropout(p=0.5))
         
-        self.model.add(Dense(50, activation='elu'))
-        self.model.add(Dropout(p=0.5))
+        self.model.add(Dense(50, activation='relu'))
+#         self.model.add(Dropout(p=0.5))
         
-        self.model.add(Dense(10, activation='elu'))
-        self.model.add(Dropout(p=0.5))
+        self.model.add(Dense(10, activation='relu'))
+#         self.model.add(Dropout(p=0.5))
         #return steering
         self.model.add(Dense(1))
 
