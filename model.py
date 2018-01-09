@@ -73,7 +73,7 @@ def train_model(model, args, df):
                             )
 
 def save_model(model, args):
-    model.save_model(args.output_model)
+    model.save(args.output_model)
 
 
 def _main():
