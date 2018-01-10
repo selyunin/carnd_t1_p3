@@ -11,13 +11,11 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./output_images/img_1.png "Model Visualization"
-[image2]: ./output_images/img_2.png "Grayscaling"
-[image3]: ./output_images/img_3.png "Recovery Image"
-[image4]: ./output_images/img_4.png "Recovery Image"
-[image5]: ./output_images/img_5.png "Recovery Image"
-[image6]: ./output_images/img_6.png "Normal Image"
-[image7]: ./output_images/img_7.png "Flipped Image"
+[image1]: ./output_images/img_1.png "Road"
+[image2]: ./output_images/img_2.png "Cameras"
+[image3]: ./output_images/img_3.png "Cropping"
+[image4]: ./output_images/img_4.png "MaxPooling"
+[image5]: ./output_images/img_5.png "Flipped"
 
 ## Rubric Points
 ### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.  
@@ -166,7 +164,6 @@ The architecture of the network is shown below:
 | dense_2 (Dense)                |  (None, 50)          |  5050      |  dense_1[0][0]                |    
 | dense_3 (Dense)                |  (None, 10)          |  510       |  dense_2[0][0]                |    
 | dense_4 (Dense)                |  (None, 1)           |  11        |  dense_3[0][0]                |    
-|                                |                      |            |                               |   
 
 First, the network accepts directly images of the road.
 In the First layer (`Cropping2D`) the unnecessary part of the image is
@@ -184,30 +181,44 @@ in the `MaxPooling2D` layer and then stack four fully connected
 layers. The last layer outputs the result.
 
 
-#### 3. Creation of the Training Set & Training Process
+### 4.3. Creation of the Training Set & Training Process
 
-To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
+I recorded the training data, driving through the track using the mouse.
+The recording includes approx. ~10k frames (~30k when taking into account
+left, right and center images, and ~60k in total since I also flipped
+each image using `cv2.flip`).
+
+Below is the example of the image of the data frame:
+
+![alt text][image1]
+
+As the vehicle has three cameras, left, center and right images are 
+recorded for each frame:
 
 ![alt text][image2]
 
-I then recorded the vehicle recovering from the left side and right sides of the road back to center so that the vehicle would learn to .... These images show what a recovery looks like starting from ... :
+We can extend the training data by flipping the images:
 
-![alt text][image3]
-![alt text][image4]
 ![alt text][image5]
 
-Then I repeated this process on track two in order to get more data points.
+As the camera images include sky and trees and part of the car at the bottom, 
+which can only confuse the network, the first layer in the architecture 
+is the `Cropping2D` layer which crops the unnecessary parts:
 
-To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
-
-![alt text][image6]
-![alt text][image7]
-
-Etc ....
-
-After the collection process, I had X number of data points. I then preprocessed this data by ...
+![alt text][image3]
 
 
-I finally randomly shuffled the data set and put Y% of the data into a validation set. 
+To reduce the amount of data, we can use image of smaller size.
+Conveniently, we can use the `MaxPooling2D` layer to downsample
+the image, feeding the convolutional layers with the following image:
 
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.
+![alt text][image4]
+
+The model is split in training and validation sets with a 80-to-20 split,
+compiled with the `mse` loss, `Adam` optimizer and a specified learning rate
+(either 1e-4 default value or specified from the command line),
+and then trained for 7 epochs. We observe that the validation loss
+decreases for all the epochs, which depicts that the model is not overfitting
+the data. After training is done at the EC2 instance, the resulting model
+is copied back to the laptop and evaluated in the simulator.
+
