@@ -23,9 +23,9 @@ The goals / steps of this project are the following:
 ### Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.  
 
 ---
-### Files Submitted & Code Quality
+## 1. Required Files
 
-#### 1. Submission includes all required files and can be used to run the simulator in autonomous mode
+### 1.1. Submission includes all required files and can be used to run the simulator in autonomous mode
 
 My project includes the following files:
 * [`model.py`](./model.py) containing the script to create and train the model
@@ -34,7 +34,9 @@ My project includes the following files:
 * [`writeup.md`](./writeup.md) the project report summarizing the results
 * [`video.mp4`](./video.mp4) a video clip of the vehicle driving autonomously around the track
 
-#### 2. Submission includes functional code
+## 2. Quality of Code
+
+### 2.1 Submission includes functional code
 
 Using the Udacity provided simulator and the 
 [`drive.py`](./drive.py) vehicle controller, 
@@ -44,13 +46,17 @@ the car can be driven autonomously around the track by executing:
 python drive.py model.h5
 ```
 
-#### 3. Submission code is usable and readable
+### 2.2. Submission code is usable and readable
 
 The [`model.py`](./model.py) file contains the code for training and saving the
 convolution neural network (CNN) in the `*.h5` format.
 The [`cnn_model.py`](./cnn_model.py) contains a CNN class, 
 which creates Sequential Keras model -- 
 the convolutional neural network with the architecture described [here](#arch).
+In order to perform training and validation and with the large
+number of images, we use `fit_generator` function and
+the following generators: `training_generator` and `validation_generator`
+that are implemented in the [`generators.py`](./generators.py) file.
 
 The `model.py` is a command line utility, which uses `argparse` module
 to pass the essential training parameters to the script.
@@ -61,102 +67,122 @@ launched as follows:
 ./model.py -out_m model.h5 -f my_training_data/ -l_r 1.3e-4
 ```
 
-When launching, one specifies (i) the output model file, (ii) the path to the
-training images, and (iii) the learning rate. 
-Other parameters may include (iv) batch size, and (v) input model 
-(which will be first read and then updated during training, 
+When launching, one specifies 
+(i) the output model file (`-out_m` flag), 
+(ii) the path to the training images (`-f` flag), and 
+(iii) the learning rate (`-l_r` flag). 
+Other parameters may include 
+(iv) batch size (`-b` flag), and 
+(v) input model (`in_m` flag. In this case the input model
+will be first read and then updated during training, 
 allowing the so-called incremental learning).
 
 
-### <a name='arch'> Model Architecture and Training Strategy </a>
+## <a name='arch'>3. Model Architecture and Training Strategy </a>
 
-#### 1. An appropriate model architecture has been employed
+### 3.1. An appropriate model architecture has been employed
 
-The `CNN` class (in the `cnn_model.py`) implements a convolutional
+The `CNN` class (in the [`cnn_model.py`](./cnn_model.py)) implements a convolutional
 neural network architecture (the method `create_model_v1_2` creates 
 the sequential Keras model). 
 I implemented a variant of a model proposed by NVIDIA from 
 [this](http://images.nvidia.com/content/tegra/automotive/images/2016/solutions/pdf/end-to-end-dl-using-px.pdf)
 paper. 
-The network accepts images of a road and outputs the steering angle.
+The network accepts images of a road as inputs and outputs the steering angle.
+
+The network first crops out the unnecessary parts of the image, then
+downsamples (reduces resolution) and normalizes the data, and then
+pass an image through five convolution, one max-pooling and four
+fully connected layers to obtain the steering prediction.
+Network details are elaborated [here](#final_arch).
+
+### 3.2. Attempts to reduce overfitting in the model
+
+First, I tried to use dropout, essentially after each convolutional
+layer, but the network actually performs worse with dropout layers, 
+so the final architecture I do not include dropout.
+(Note, also that the NVIDIA end-to-end deep learning architecture 
+does not use dropout as well).
+Overall, the network performs quite well with a rather small validation
+loss. 
+
+### 3.3. Model parameter tuning
+
+The model used an Adam optimizer, 
+batch size by default is `32 * 6 = 192` images,
+learning rate `1e-4`.
+Please note how the batch size is calculated:
+as we use left, right, and center images, and 
+all these images flipped, the batch
+size of images is then six times the number of rows in
+the data frame (a row in the data frame hold information about
+center, left, and right images).
+
+### 3.4. Appropriate training data
+
+Collection of the training data is essential to the get proper
+network performance. I used images from center, left and right
+cameras. For side images, I used a shifting factor of `0.115`,
+which is added to the control angle to help the vehicle recover
+back to center.
+
+## 4. Architecture and Training Documentation
+
+### 4.1. Solution Design Approach
+
+First, I used `pandas` to read the log files which comes with
+the recorded data. I then substitute the absolute path in the 
+`pandas` data frame with the relative path for the given machine
+(since I use Amazon EC2 instance for model training, and my local
+machine for creating the training data, this step is essential
+for using the training data on the *GPU* instance).
+
+Second, I restore the previously trained Keras model (or create
+a new one, and use `fit_generator` function to perform model
+training and validation. I implemented both training and validation
+generators that supply the network with batches of images, otherwise
+holding the images in memory always result in `MemoryError`. Then,
+after the training is finished, I store the model to the `*.h5` file
+and test it back on my local machine.
+
+### <a name='final_arch'> 4.2. Final Model Architecture </a>
 
 The architecture of the network is shown below:
 
 | Layer (type)                   |  Output Shape        |  Param #   |  Connected to                 |    
 |:------------------------------:|:--------------------:|:----------:|:-----------------------------:|
+| Network input: road images     |       (160, 320, 3)  |  0         |                               |    
 | cropping2d_1 (Cropping2D)      |  (None, 65, 320, 3)  |  0         |  cropping2d_input_1[0][0]     |    
-|                                |                      |            |                               |    
 | maxpooling2d_1 (MaxPooling2D)  |  (None, 16, 80, 3)   |  0         |  cropping2d_1[0][0]           |    
-|                                |                      |            |                               |    
 | lambda_1 (Lambda)              |  (None, 16, 80, 3)   |  0         |  maxpooling2d_1[0][0]         |    
-|                                |                      |            |                               |    
 | Conv2D_l1 (Convolution2D)      |  (None, 14, 78, 24)  |  672       |  lambda_1[0][0]               |    
-|                                |                      |            |                               |    
 | Conv2D_l2 (Convolution2D)      |  (None, 12, 76, 36)  |  7812      |  Conv2D_l1[0][0]              |    
-|                                |                      |            |                               |    
 | Conv2D_l3 (Convolution2D)      |  (None, 10, 74, 48)  |  15600     |  Conv2D_l2[0][0]              |    
-|                                |                      |            |                               |    
 | Conv2D_l4 (Convolution2D)      |  (None, 8, 72, 64)   |  27712     |  Conv2D_l3[0][0]              |    
-|                                |                      |            |                               |    
 | Conv2D_l5 (Convolution2D)      |  (None, 6, 70, 64)   |  36928     |  Conv2D_l4[0][0]              |    
-|                                |                      |            |                               |    
 | maxpooling2d_2 (MaxPooling2D)  |  (None, 3, 35, 64)   |  0         |  Conv2D_l5[0][0]              |    
-|                                |                      |            |                               |    
 | flatten_1 (Flatten)            |  (None, 6720)        |  0         |  maxpooling2d_2[0][0]         |    
-|                                |                      |            |                               |    
 | dense_1 (Dense)                |  (None, 100)         |  672100    |  flatten_1[0][0]              |    
-|                                |                      |            |                               |    
 | dense_2 (Dense)                |  (None, 50)          |  5050      |  dense_1[0][0]                |    
-|                                |                      |            |                               |    
 | dense_3 (Dense)                |  (None, 10)          |  510       |  dense_2[0][0]                |    
-|                                |                      |            |                               |    
 | dense_4 (Dense)                |  (None, 1)           |  11        |  dense_3[0][0]                |    
-|                                                       |            |                               |   
+|                                |                      |            |                               |   
 
+First, the network accepts directly images of the road.
+In the First layer (`Cropping2D`) the unnecessary part of the image is
+cropped out
+(i.e. sky above the road, and the bottom, which includes the part of the
+car).
+Then, I use the `MaxPooling2D` layer to downsample the image (or in other words
+reduce image dimensions).
+Next, I use the `Lambda` layer to normalize the pixel values to the
+domain `[0,1]`.
+I then use five successive convolutional layers (Convolution2D) 
+with the `3`-by-`3` kernel and `24`, `36`, `48`, `64` and `64` filters.
+Next,  I reduce the number of neurons in the fully connected layers
+in the `MaxPooling2D` layer and then stack four fully connected
+layers. The last layer outputs the result.
 
-
-
-#### 2. Attempts to reduce overfitting in the model
-
-The model contains dropout layers in order to reduce overfitting (model.py lines 21). 
-
-The model was trained and validated on different data sets to ensure that the model was not overfitting (code line 10-16). The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
-
-#### 3. Model parameter tuning
-
-The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 25).
-
-#### 4. Appropriate training data
-
-Training data was chosen to keep the vehicle driving on the road. I used a combination of center lane driving, recovering from the left and right sides of the road ... 
-
-For details about how I created the training data, see the next section. 
-
-### Model Architecture and Training Strategy
-
-#### 1. Solution Design Approach
-
-The overall strategy for deriving a model architecture was to ...
-
-My first step was to use a convolution neural network model similar to the ... I thought this model might be appropriate because ...
-
-In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. This implied that the model was overfitting. 
-
-To combat the overfitting, I modified the model so that ...
-
-Then I ... 
-
-The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle fell off the track... to improve the driving behavior in these cases, I ....
-
-At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
-
-#### 2. Final Model Architecture
-
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
-
-Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
-
-![alt text][image1]
 
 #### 3. Creation of the Training Set & Training Process
 
