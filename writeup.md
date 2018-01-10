@@ -36,8 +36,9 @@ My project includes the following files:
 
 #### 2. Submission includes functional code
 
-Using the Udacity provided simulator and the `drive.py` vehicle controller, 
-the car can be driven autonomously around the track by executing 
+Using the Udacity provided simulator and the 
+[`drive.py`](./drive.py) vehicle controller, 
+the car can be driven autonomously around the track by executing:
 
 ```sh
 python drive.py model.h5
@@ -45,11 +46,11 @@ python drive.py model.h5
 
 #### 3. Submission code is usable and readable
 
-The `model.py` file contains the code for training and saving the
-convolution neural network (CNN) as an `*.h5` file.
-The `cnn_model.py` contains a CNN class, which creates Sequential
-Keras model -- the convolutional neural network with the architecture
-described [here](arch).
+The [`model.py`](./model.py) file contains the code for training and saving the
+convolution neural network (CNN) in the `*.h5` format.
+The [`cnn_model.py`](./cnn_model.py) contains a CNN class, 
+which creates Sequential Keras model -- 
+the convolutional neural network with the architecture described [here](#arch).
 
 The `model.py` is a command line utility, which uses `argparse` module
 to pass the essential training parameters to the script.
@@ -67,7 +68,7 @@ Other parameters may include (iv) batch size, and (v) input model
 allowing the so-called incremental learning).
 
 
-### <a id='arch'> Model Architecture and Training Strategy </a>
+### <a name='arch'> Model Architecture and Training Strategy </a>
 
 #### 1. An appropriate model architecture has been employed
 
